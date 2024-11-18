@@ -1,0 +1,22 @@
+# [https://github.com/orgs/community/discussions/27154#discussioncomment-3254845]
+
+name: Dump github context
+# the placeholder `$default-branch` will be automatically replaced with
+# the name of the repository's default branch, e.g. main
+on:
+  push:
+    branches: [$default-branch]
+  pull_request:
+    branches: [$default-branch]
+
+jobs:
+  dump_github_context:
+    - id: dump_github
+      if: github
+      runs-on: ubuntu-latest
+      steps:
+        - run: echo "$GITHUB_CONTEXT"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+
+# EoF
