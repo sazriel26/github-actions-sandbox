@@ -2,6 +2,7 @@ name: Homebrew TAP Self update (Workflow)
 
 on:
   workflow_call:
+    inputs:
       dry-run:
         description: "Simulate (dry-run) operation - Default: true"
         required: false
