@@ -14,15 +14,15 @@ on:
         type: string
         default: "github-actions/workflow/homebrew-tap-self-update"
       github_actions_commit_title:
-        description: "Commit title for Github actions - Default: ${{ github.workflow }}"
+        description: "Commit title for Github actions - Default: homebrew-tap-self-update"
         required: false
         type: string
-        default: "${{ github.workflow }}"
+        default: "homebrew-tap-self-update"
       github_actions_pr_title:
-        description: "PR title for Github actions - Default: [github-actions] ${{ github.workflow }}"
+        description: "PR title for Github actions - Default: [github-actions] homebrew-tap-self-update"
         required: false
         type: string
-        default: "[github-actions] ${{ github.workflow }}"
+        default: "[github-actions] homebrew-tap-self-update"
 
 
 jobs:
