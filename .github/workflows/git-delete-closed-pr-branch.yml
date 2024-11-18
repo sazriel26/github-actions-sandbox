@@ -18,10 +18,8 @@ jobs:
     if: ${{ github.head_ref }}
     steps:
     - uses: actions/checkout@v4
-#      with:
-#        ref: ${{ github.head_ref }}
 
     - if: ${{ ! inputs.dry-run }}
-      name: git push -d origin ${{ github.head_ref }}
+      name: ($${ inputs.dry-run }}) git push -d origin ${{ github.head_ref }}
       run: git push -d origin ${{ github.head_ref }}
 
