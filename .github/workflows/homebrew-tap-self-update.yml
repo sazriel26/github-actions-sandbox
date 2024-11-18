@@ -1,0 +1,230 @@
+name: Homebrew TAP Self update (Workflow)
+
+on:
+  workflow_call:
+      dry-run:
+        description: "Simulate (dry-run) operation - Default: true"
+        required: false
+        type: boolean
+        default: true
+      github_actions_working_branch:
+        description: "Working branch for Github actions - Default: github-actions/workflow/homebrew-tap-self-update"
+        required: false
+        type: string
+        default: "github-actions/workflow/homebrew-tap-self-update"
+      github_actions_commit_title:
+        description: "Commit title for Github actions - Default: ${{ github.workflow }}"
+        required: false
+        type: string
+        default: "${{ github.workflow }}"
+      github_actions_pr_title:
+        description: "PR title for Github actions - Default: [github-actions] ${{ github.workflow }}"
+        required: false
+        type: string
+        default: "[github-actions] ${{ github.workflow }}"
+
+
+jobs:
+  pre_run:
+    name: Prelude to run jobs on this workflow
+    runs-on: ubuntu-latest
+
+    outputs:
+      github_pull_request_url: ${{ steps.gh_pr_search.outputs.url }}
+      github_head_ref: ${{ steps.gh_pr_get_headRefName.outputs.branch }}
+
+    steps:
+      - id: github_actions_checkout
+        uses: actions/checkout@v4
+
+      - id: gh_pr_search
+        if: success()
+        run: |
+          pr_url=$(gh pr list --search \
+            'state:open author:github-actions[bot] "${{ inputs.github_actions_pr_title }}" in:title' --json url  --jq '.[] | .url')
+          echo GitHub Pull Request: ${pr_url}
+          echo url=${pr_url} >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: gh_pr_get_headRefName:
+        if: success()
+        run: |
+          if [[ -n "${{ env.PR_URL }}" ]]; then
+            branch=$(gh pr view "${{ env.PR_URL }}" --json headRefName --jq '.headRefName')
+          fi
+          echo GitHub Current Branch: ${branch}
+          echo branch=${branch} >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ steps.gh_pr_search.outputs.url }}
+
+  homebrew_livecheck_tap:
+    name: Livecheck of Homebrew tap ${{ github.repository }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: pre_run
+
+    env:
+      github_head_ref: ${{ needs.pre_run.outputs.github_head_ref }}
+      HOMEBREW_NO_ANALYTICS: 1
+
+    outputs:
+      homebrew_livecheck_macOS_count: ${{ steps.homebrew_livecheck_json.outputs.macOS-latest_count }}
+      homebrew_livecheck_macOS_json: ${{ steps.homebrew_livecheck_json.outputs.macOS-latest_json }}
+      homebrew_livecheck_ubuntu_count: ${{ steps.homebrew_livecheck_json.outputs.ubuntu-latest_count }}
+      homebrew_livecheck_ubuntu_json: ${{ steps.homebrew_livecheck_json.outputs.ubuntu-latest_json }}
+
+    strategy:
+      matrix:
+         os: [ macOS-latest, ubuntu-latest ]
+
+    steps:
+      - id: install-homebrew
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh \
+            | bash
+          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+          echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        env:
+          # Homebrew install script non interactive mode :)
+          NONINTERACTIVE: 1
+
+      - id: setup-homebrew
+        run: |
+          echo Disabling analytics
+          brew analytics off
+
+          echo Enabling developer commands
+          brew developer on
+
+          echo Updating
+          brew update
+
+      - id: homebrew_tap
+        run: |
+          brew tap ${{ github.repository }}
+          gawb=${{ env.github_head_ref }}
+          if [[ -n "${gawb}" ]]; then
+            br="$(brew --repository)/Library/Taps/${{ github.repository }}"
+            git -C "${br}" fetch origin ${gawb}
+            git -C "${br}" checkout ${gawb}
+          fi
+
+      - id: homebrew_livecheck_json
+        #name: Homebrew livecheck tap ${{ github.repository }} on ${{ matrix.os }}
+        run: |
+          json=$(brew livecheck --json --newer-only --tap ${{ github.repository }})
+          echo ${{ matrix.os }}_count=$(jq length <<< ${json}) >> $GITHUB_OUTPUT
+          echo ${{ matrix.os }}_json=${json} >> $GITHUB_OUTPUT
+
+  update_formula:
+    name: GitHub pull request generator
+    runs-on: ubuntu-latest
+    needs: [ pre_run, homebrew_livecheck_tap ]
+    if: >-
+      needs.homebrew_livecheck_tap.outputs.homebrew_livecheck_macOS_count > 0 ||
+      needs.homebrew_livecheck_tap.outputs.homebrew_livecheck_ubuntu_count > 0
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    env:
+      github_head_ref: ${{ needs.pre_run.outputs.github_head_ref }}
+      macos_count: ${{ needs.homebrew_livecheck_tap.outputs.homebrew_livecheck_macOS_count }}
+      macos_json: ${{ toJSON(needs.homebrew_livecheck_tap.outputs.homebrew_livecheck_macOS_json) }}
+      ubuntu_count: ${{ needs.homebrew_livecheck_tap.outputs.homebrew_livecheck_ubuntu_count }}
+      ubuntu_json: ${{ toJSON(needs.homebrew_livecheck_tap.outputs.homebrew_livecheck_ubuntu_json) }}
+
+    steps:
+      - id: print-debug
+        if: always()
+        run: |
+          echo GitHub Head reference: ${{ env.github_head_ref }}
+          echo MacOS: count=${{ env.macos_count}} json=${{ env.macos_json }}
+          echo Ubuntu: count=${{ env.ubuntu_count }} json=${{ env.ubuntu_json }}
+
+      - id: github_actions_checkout
+        uses: actions/checkout@v4
+        #with:
+        #  ref: ${{ env.github_head_ref || github.head_ref }}
+
+      - id: setup_git_clone
+        if: success()
+        run: |
+          # Note: the following account information will not work on GHES
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          gawb=${{ env.github_head_ref }}
+          if [[ -n "${gawb}" ]]; then
+            git fetch origin ${gawb}
+            git checkout ${gawb}
+          else
+            git checkout -b ${{ inputs.github_actions_working_branch }}
+          fi
+
+      - if: ${{ (env.macos_count > 0) }}
+        name: Computing from macOS-latest....
+        run: |
+          echo \# macOS-latest \
+          | tee -a Changelog
+          for f in $(jq -r '.[] | .formula' <<< ${{ env.macos_json }}); do
+            version_current=$(jq -r --arg f "${f}" '.[] | select(.formula == $f) | .version.current' <<< ${{ env.macos_json }})
+            version_latest=$(jq -r --arg f "${f}" '.[] | select(.formula == $f) | .version.latest' <<< ${{ env.macos_json }})
+            if [[ "${version_current}" != "${version_latest}" ]]; then
+              sed -i -e '/\#.*@github-actions-macos-latest@/s/version ".*"/version "'"${version_latest}"'"/' \
+                Formula/${f}.rb
+              git add Formula/${f}.rb
+              echo ${f}\:\ "${version_current}" \-\> "${version_latest}" \
+              | tee -a Changelog
+            fi
+          done
+
+      - if: ${{ (env.ubuntu_count > 0) }}
+        name: Computing from ubuntu-latest....
+        run: |
+          echo \# ubuntu-latest \
+          | tee -a Changelog
+          for f in $(jq -r '.[] | .formula' <<< ${{ env.ubuntu_json }}); do
+            version_current=$(jq -r --arg f "${f}" '.[] | select(.formula == $f) | .version.current' <<< ${{ env.ubuntu_json }})
+            version_latest=$(jq -r --arg f "${f}" '.[] | select(.formula == $f) | .version.latest' <<< ${{ env.ubuntu_json }})
+            if [[ "${version_current}" != "${version_latest}" ]]; then
+              sed -i -e '/\#.*@github-actions-ubuntu-latest@/s/version ".*"/version "'"${version_latest}"'"/' \
+                Formula/${f}.rb
+              git add Formula/${f}.rb
+              echo ${f}\:\ "${version_current}" \-\> "${version_latest}" \
+              | tee -a Changelog
+            fi
+          done
+
+      - id: git_commit
+        name: (simulate=${{ inputs.dry-run }}) Commit changes
+        if: ${{ ! inputs.dry-run }}
+        run: |
+          git commit -m "${{ inputs.github_actions_commit_title }}"
+          gawb=${{ env.github_head_ref || inputs.github_actions_working_branch }}
+          git push --set-upstream origin ${gawb}
+
+      - id: git_push
+        name: (simulate=${{ inputs.dry-run }}) Pushing to origin ${{ env.PUSH_BRANCH }}
+        if: ${{ ! inputs.dry-run }}
+        run: |
+          git commit -m "GitHub Workflow Self-Update"
+          #gawb=${{ env.github_head_ref || inputs.github_actions_working_branch }}
+          git push --set-upstream origin ${{ env.PUSH_BRANCH }} #${gawb}
+        env:
+          PUSH_BRANCH: ${{ env.github_head_ref || inputs.github_actions_working_branch }}
+
+      - id: gh_pr_create
+        name: (simulate=${{ inputs.dry-run }}) Create a Pull request
+        if: ${{ ! inputs.dry-run }}
+        run: |
+          gh pr create \
+            --base main \
+            --title "${{ inputs.github_actions_pr_title }}" \
+            --body-file Changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
