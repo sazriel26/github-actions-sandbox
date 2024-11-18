@@ -47,7 +47,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - id: gh_pr_get_headRefName:
+      - id: gh_pr_get_headRefName
         if: success()
         run: |
           if [[ -n "${{ env.PR_URL }}" ]]; then
