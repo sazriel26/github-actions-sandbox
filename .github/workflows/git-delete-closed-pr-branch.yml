@@ -21,6 +21,6 @@ jobs:
 #      with:
 #        ref: ${{ github.head_ref }}
 
-    - if: ! ${{ inputs.dry-run }}
+    - if: ${{ ! inputs.dry-run }}
       run: git push -d origin ${{ github.head_ref }}
 
