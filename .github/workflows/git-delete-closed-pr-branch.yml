@@ -1,9 +1,13 @@
 name: Delete Git branch of closed Pull Requests
 
 on:
-  pull_request:
-    types:
-      - closed
+  workflow_call:
+    inputs:
+      dry-run:
+        description: "Simulate (dry-run) operation - Default: true"
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -17,6 +21,6 @@ jobs:
       with:
         ref: ${{ github.head_ref }}
 
-    - run: |
-        git push -d origin ${{ github.head_ref }}
+    - if: ! ${{ inputs.dry-run }}
+      run: git push -d origin ${{ github.head_ref }}
 
