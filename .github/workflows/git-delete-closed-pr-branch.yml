@@ -20,6 +20,6 @@ jobs:
     - uses: actions/checkout@v4
 
     - if: ${{ ! inputs.dry-run }}
-      name: ($${ inputs.dry-run }}) git push -d origin ${{ github.head_ref }}
+      name: (simulate=$${ inputs.dry-run }}) git push -d origin ${{ github.head_ref }}
       run: git push -d origin ${{ github.head_ref }}
 
