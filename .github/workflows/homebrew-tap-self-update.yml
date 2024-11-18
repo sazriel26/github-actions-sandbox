@@ -133,6 +133,7 @@ jobs:
       pull-requests: write
 
     env:
+      github_pull_request_url: ${{ needs.pre_run.outputs.github_pull_request_url }}
       github_head_ref: ${{ needs.pre_run.outputs.github_head_ref }}
       macos_count: ${{ needs.homebrew_livecheck_tap.outputs.homebrew_livecheck_macOS_count }}
       macos_json: ${{ toJSON(needs.homebrew_livecheck_tap.outputs.homebrew_livecheck_macOS_json) }}
@@ -201,31 +202,30 @@ jobs:
           done
 
       - id: git_commit
-        name: (simulate=${{ inputs.dry-run }}) Commit changes
-        if: ${{ ! inputs.dry-run }}
+        name: Commit changes
         run: |
           git commit -m "${{ inputs.github_actions_commit_title }}"
-          gawb=${{ env.github_head_ref || inputs.github_actions_working_branch }}
-          git push --set-upstream origin ${gawb}
 
       - id: git_push
         name: (simulate=${{ inputs.dry-run }}) Pushing to origin ${{ env.PUSH_BRANCH }}
         if: ${{ ! inputs.dry-run }}
         run: |
-          git commit -m "GitHub Workflow Self-Update"
-          #gawb=${{ env.github_head_ref || inputs.github_actions_working_branch }}
           git push --set-upstream origin ${{ env.PUSH_BRANCH }} #${gawb}
         env:
           PUSH_BRANCH: ${{ env.github_head_ref || inputs.github_actions_working_branch }}
 
-      - id: gh_pr_create
-        name: (simulate=${{ inputs.dry-run }}) Create a Pull request
+      - id: gh_pr_create_or_comment
+        name: (simulate=${{ inputs.dry-run }}) Create or Comment a Pull request
         if: ${{ ! inputs.dry-run }}
         run: |
-          gh pr create \
-            --base main \
-            --title "${{ inputs.github_actions_pr_title }}" \
-            --body-file Changelog
+          if [[ -n "${{ env.github_pull_request_url }}" ]]; then
+            gh pr comment --body-file Changelog
+          else
+            gh pr create \
+              --base main \
+              --title "${{ inputs.github_actions_pr_title }}" \
+              --body-file Changelog
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
