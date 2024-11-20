@@ -1,0 +1,55 @@
+# [https://docs.github.com/en/actions/sharing-automations/creating-actions/creating-a-composite-action]
+
+name: Setup Homebrew in Github Actions
+description: Initialize Homebrew like end-users on Github Actions resources
+
+inputs:
+  developer-mode:
+    description: "Enable or not the developer mode with dev-cli"
+    required: false
+    type: boolean
+    default: false
+  update:
+    description: "Enable or not the update of brew"
+    required: false
+    type: boolean
+    default: false
+
+env:
+  # Disabling analytics for such purposes
+  HOMEBREW_NO_ANALYTICS: 1
+
+runs:
+  using: composite
+  steps:
+    run:
+      - id: install-homebrew
+        if: runner.os == 'linux'
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh \
+            | bash
+          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+          echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        env:
+          # Homebrew install script non interactive mode :)
+          NONINTERACTIVE: 1
+
+      - id: setup-homebrew
+        run: |
+          echo Disabling analytics
+          brew analytics off
+
+          echo Enabling developer commands: ${{ inputs.developer-mode }}
+          if ${{ inputs.developer-mode }}; then
+            brew developer on
+          else
+            : brew developer off
+          fi
+
+          echo Updating brew: ${{ inputs.update }}
+          if ${{ inputs.update }}; then
+            brew update
+          fi
+
+# EoF
