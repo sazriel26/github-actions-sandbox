@@ -22,34 +22,33 @@ env:
 runs:
   using: composite
   steps:
-    run:
-      - id: install-homebrew
-        if: runner.os == 'linux'
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh \
-            | bash
-          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
-          echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        env:
-          # Homebrew install script non interactive mode :)
-          NONINTERACTIVE: 1
+    - id: install-homebrew
+      if: runner.os == 'linux'
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh \
+          | bash
+        echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+        echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      env:
+        # Homebrew install script non interactive mode :)
+        NONINTERACTIVE: 1
 
-      - id: setup-homebrew
-        run: |
-          echo Disabling analytics
-          brew analytics off
+    - id: setup-homebrew
+      run: |
+        echo Disabling analytics
+        brew analytics off
 
-          echo Enabling developer commands: ${{ inputs.developer-mode }}
-          if ${{ inputs.developer-mode }}; then
-            brew developer on
-          else
-            : brew developer off
-          fi
+        echo Enabling developer commands: ${{ inputs.developer-mode }}
+        if ${{ inputs.developer-mode }}; then
+          brew developer on
+        else
+          : brew developer off
+        fi
 
-          echo Updating brew: ${{ inputs.update }}
-          if ${{ inputs.update }}; then
-            brew update
-          fi
+        echo Updating brew: ${{ inputs.update }}
+        if ${{ inputs.update }}; then
+          brew update
+        fi
 
 # EoF
