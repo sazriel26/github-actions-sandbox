@@ -36,7 +36,7 @@ runs:
         # Homebrew install script non interactive mode :)
         NONINTERACTIVE: 1
         # Debian Frontend
-        DEBIAN_FRONTEND=noninteractive
+        DEBIAN_FRONTEND: noninteractive
 
     - id: setup-homebrew
       run: |
