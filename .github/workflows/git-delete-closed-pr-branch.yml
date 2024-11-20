@@ -1,4 +1,4 @@
-name: Delete Git branch of closed Pull Requests
+# Delete Git branch of closed Pull Requests
 
 on:
   workflow_call:
@@ -17,9 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.head_ref }}
     steps:
-    - uses: actions/checkout@v4
+    - id: git_checkout
+      uses: actions/checkout@v4
 
-    - if: ${{ ! inputs.dry-run }}
-      name: (simulate=$${ inputs.dry-run }}) git push -d origin ${{ github.head_ref }}
-      run: git push -d origin ${{ github.head_ref }}
+    - id: git_delete_branch_if_exists
+      if: ${{ ! inputs.dry-run }}
+      run: |
+        if git fetch origin ${{ github.head_ref }}; then
+          git push -d origin ${{ github.head_ref }}
+        fi
 
+# EoF
