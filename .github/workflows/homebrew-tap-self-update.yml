@@ -80,31 +80,10 @@ jobs:
          os: [ macOS-latest, ubuntu-latest ]
 
     steps:
-#      - id: install-homebrew
-#        if: ${{ startsWith(matrix.os, 'ubuntu') }}
-#        run: |
-#          curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh \
-#            | bash
-#          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
-#          echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
-#          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-#        env:
-#          # Homebrew install script non interactive mode :)
-#          NONINTERACTIVE: 1
-#
-#      - id: setup-homebrew
-#        run: |
-#          echo Disabling analytics
-#          brew analytics off
-#
-#          echo Enabling developer commands
-#          brew developer on
-#
-#          echo Updating
-#          brew update
-
       - id: setup-homebrew
         uses: sazriel26/github-actions-sandbox/setup-homebrew-on-github-actions@main
+        with:
+          developer-mode: true
 
       - id: homebrew_tap
         run: |
