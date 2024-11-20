@@ -30,6 +30,7 @@ runs:
         echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
         echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      shell: bash
       env:
         # Homebrew install script non interactive mode :)
         NONINTERACTIVE: 1
@@ -50,5 +51,6 @@ runs:
         if ${{ inputs.update }}; then
           brew update
         fi
+      shell: bash
 
 # EoF
