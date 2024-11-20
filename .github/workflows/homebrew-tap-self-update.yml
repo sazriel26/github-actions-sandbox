@@ -109,8 +109,9 @@ jobs:
           gawb=${{ env.github_head_ref }}
           if [[ -n "${gawb}" ]]; then
             br="$(brew --repository)/Library/Taps/${{ github.repository }}"
-            git -C "${br}" fetch origin ${gawb}
-            git -C "${br}" checkout ${gawb}
+            if git -C "${br}" fetch origin ${gawb}; then
+              git -C "${br}" checkout ${gawb}
+            fi
           fi
 
       - id: homebrew_livecheck_json
