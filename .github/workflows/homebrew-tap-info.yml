@@ -60,12 +60,12 @@ jobs:
       - id: check
         run: |
           if [[ ${{ inputs.forced }} ]]; then
-            echo yesno=1
+            echo yesno=1 >> $GITHUB_OUTPUT
           elif [[ ${{ needs.check_artifact_ref.outputs.ref }} != ${{ needs.check_git_ref.outputs.ref }} ]]; then
-            echo yesno=1
+            echo yesno=1 >> $GITHUB_OUTPUT
           else
-            echo yesno=0
-          fi >> $GITHUB_OUTPUT
+            echo yesno=0 >> $GITHUB_OUTPUT
+          fi
 
   homebrew_tap_info:
     name: Homebrew tap-info ${{ github.repository }}
