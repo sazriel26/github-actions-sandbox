@@ -53,9 +53,6 @@ jobs:
     needs: [ check_artifact_ref, check_git_ref ]
     if: ${{ ! inputs.forced }}
 
-    env:
-      HOMEBREW_NO_ANALYTICS: 1
-
     outputs:
       go-ahead: ${{ steps.check.outputs.yesno }}
 
