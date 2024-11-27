@@ -21,7 +21,7 @@ jobs:
     outputs:
       ref: ${{ steps.get-ref.outputs.ref }}
 
-    if: ${{ ! inputs.forced }}
+    #if: ${{ ! inputs.forced }}
     steps:
       - id: download-artifacts
         uses: actions/download-artifact@v4
@@ -39,7 +39,7 @@ jobs:
     outputs:
       ref: ${{ steps.get-ref.outputs.ref }}
 
-    if: ${{ ! inputs.forced }}
+    #if: ${{ ! inputs.forced }}
     steps:
       - id: get-ref
         run: |
@@ -52,7 +52,7 @@ jobs:
     outputs:
       go-ahead: ${{ steps.check.outputs.yesno }}
 
-    if: ${{ ! inputs.forced }}
+    #if: ${{ ! inputs.forced }}
     steps:
       - id: check
         run: |
