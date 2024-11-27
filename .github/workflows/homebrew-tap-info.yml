@@ -16,13 +16,12 @@ on:
 
 jobs:
   check_artifact_ref:
-    name: Retrieve ref of tap-info artifact on ${{ github.repository }}
-    if: ${{ ! inputs.forced }}
     runs-on: ubuntu-latest
 
     outputs:
       ref: ${{ steps.get-ref.outputs.ref }}
 
+    if: ${{ ! inputs.forced }}
     steps:
       - id: download-artifacts
         uses: actions/download-artifact@v4
@@ -35,27 +34,25 @@ jobs:
           echo ref=$(jq -r '.[0]."HEAD"' ${{ inputs.github_actions_artifact_name }}) >> $GITHUB_OUTPUT
 
   check_git_ref:
-    name: Retrieve ref of git on ${{ github.repository }}
-    if: ${{ ! inputs.forced }}
     runs-on: ubuntu-latest
 
     outputs:
       ref: ${{ steps.get-ref.outputs.ref }}
 
+    if: ${{ ! inputs.forced }}
     steps:
       - id: get-ref
         run: |
           echo ref=${{ github.head_ref }}) >> $GITHUB_OUTPUT
 
   check_freshness:
-    name: Check freshness of tap-info on ${{ github.repository }}
     runs-on: ubuntu-latest
     needs: [ check_artifact_ref, check_git_ref ]
-    if: ${{ ! inputs.forced }}
 
     outputs:
       go-ahead: ${{ steps.check.outputs.yesno }}
 
+    if: ${{ ! inputs.forced }}
     steps:
       - id: check
         run: |
@@ -68,10 +65,8 @@ jobs:
           fi
 
   homebrew_tap_info:
-    name: Homebrew tap-info ${{ github.repository }}
     runs-on: ubuntu-latest # macOS-latest?
     needs: check_freshness
-    if: ${{ inputs.forced || needs.check_freshness.outputs.go-ahead }}
 
     env:
       HOMEBREW_NO_ANALYTICS: 1
@@ -79,6 +74,7 @@ jobs:
     outputs:
       homebrew-tap-info-json: ${{ steps.echo.outputs.json }}
 
+    if: ${{ inputs.forced || needs.check_freshness.outputs.go-ahead }}
     steps:
       - id: setup-homebrew
         uses: sazriel26/github-actions-sandbox/setup-homebrew-on-github-actions@main
