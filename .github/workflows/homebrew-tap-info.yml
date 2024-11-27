@@ -1,0 +1,112 @@
+name: Homebrew TAP INFO (Workflow)
+
+on:
+  workflow_call:
+    inputs:
+      forced:
+        description: "Force execution - Default: false"
+        required: false
+        type: boolean
+        default: false
+      github_actions_artifact_name:
+        description: "Artifact name for tap information - Default: homebrew-tap-info-json"
+        required: false
+        type: string
+        default: "homebrew-tap-info-json"
+
+jobs:
+  check_artifact_ref:
+    name: Retrieve ref of tap-info artifact on ${{ github.repository }}
+    if: ${{ ! inputs.forced }}
+    runs-on: ubuntu-latest
+
+    outputs:
+      ref: ${{ steps.get-ref.outputs.ref }}
+
+    steps:
+      - id: download-artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.github_actions_artifact_name }}
+          path: ${{ inputs.github_actions_artifact_name }}
+
+      - id: get-ref
+        run: |
+          echo ref=$(jq -r '.[0]."HEAD"' ${{ inputs.github_actions_artifact_name }}) >> $GITHUB_OUTPUT
+
+  check_git_ref:
+    name: Retrieve ref of git on ${{ github.repository }}
+    if: ${{ ! inputs.forced }}
+    runs-on: ubuntu-latest
+
+    outputs:
+      ref: ${{ steps.get-ref.outputs.ref }}
+
+    steps:
+      - id: get-ref
+        run: |
+          echo ref=${{ github.head_ref }}) >> $GITHUB_OUTPUT
+
+  check_freshness:
+    name: Check freshness of tap-info on ${{ github.repository }}
+    runs-on: ubuntu-latest
+    needs: [ check_artifact_ref, check_git_ref ]
+    if: ${{ ! inputs.forced }}
+
+    env:
+      HOMEBREW_NO_ANALYTICS: 1
+
+    outputs:
+      go-ahead: ${{ steps.check.outputs.yesno }}
+
+    steps:
+      - id: check
+        run: |
+          if [[ ${{ inputs.forced }} ]]; then
+            echo yesno=1
+          elif [[ ${{ needs.check_artifact_ref.outputs.ref }} != ${{ needs.check_git_ref.outputs.ref }} ]]; then
+            echo yesno=1
+          else
+            echo yesno=0
+          fi >> $GITHUB_OUTPUT
+
+  homebrew_tap_info:
+    name: Homebrew tap-info ${{ github.repository }}
+    runs-on: ubuntu-latest # macOS-latest?
+    needs: check_freshness
+    if: ${{ inputs.forced || needs.check_freshness.outputs.go-ahead }}
+
+    env:
+      HOMEBREW_NO_ANALYTICS: 1
+
+    outputs:
+      homebrew-tap-info-json: ${{ steps.echo.outputs.json }}
+
+    steps:
+      - id: setup-homebrew
+        uses: sazriel26/github-actions-sandbox/setup-homebrew-on-github-actions@main
+        with:
+          developer-mode: true
+
+      - id: homebrew-tap
+        run: |
+          brew tap ${{ github.repository }}
+
+      - id: homebrew-tap-info
+        run: |
+          brew tap-info --json ${{ github.repository }} \
+            > ${{ inputs.github_actions_artifact_name }}
+
+      - id: upload-artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.github_actions_artifact_name }}
+          path: ${{ inputs.github_actions_artifact_name }}
+          overwrite: true
+
+     - id: echo 
+       run: |
+          json=$(< ${{ inputs.github_actions_artifact_name }})
+          echo json=${json} >> $GITHUB_OUTPUT
+
+# EoF
