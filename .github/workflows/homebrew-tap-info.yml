@@ -43,7 +43,7 @@ jobs:
     steps:
       - id: get-ref
         run: |
-          echo ref=${{ github.head_ref }}) >> $GITHUB_OUTPUT
+          echo ref=${{ github.head_ref }} >> $GITHUB_OUTPUT
 
   check_freshness:
     runs-on: ubuntu-latest
