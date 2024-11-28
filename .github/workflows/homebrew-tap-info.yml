@@ -24,13 +24,13 @@ jobs:
     #if: ${{ ! inputs.forced }}
     steps:
       - id: download-artifacts
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.github_actions_artifact_name }}
           path: ${{ inputs.github_actions_artifact_name }}
 
       - id: get-ref
-        if: always()
         run: |
           if [[ -e ${{ inputs.github_actions_artifact_name }} ]]; then
             echo ref=$(jq -r '.[0]."HEAD"' ${{ inputs.github_actions_artifact_name }})
