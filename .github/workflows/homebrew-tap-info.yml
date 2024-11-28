@@ -57,15 +57,15 @@ jobs:
       - id: check
         run: |
           if [[ ${{ inputs.forced }} ]]; then
-            echo yesno=1 >> $GITHUB_OUTPUT
+            echo yesno=1
           elif [[ ${{ needs.check_artifact_ref.outputs.ref }} != ${{ needs.check_git_ref.outputs.ref }} ]]; then
-            echo yesno=1 >> $GITHUB_OUTPUT
+            echo yesno=1
           else
-            echo yesno=0 >> $GITHUB_OUTPUT
-          fi
+            echo yesno=0
+          fi >> $GITHUB_OUTPUT
 
   homebrew_tap_info:
-    runs-on: ubuntu-latest # macOS-latest?
+    runs-on: ubuntu-latest
     needs: check_freshness
 
     env:
@@ -76,26 +76,26 @@ jobs:
 
     if: ${{ inputs.forced || needs.check_freshness.outputs.go-ahead }}
     steps:
-      - id: setup-homebrew
-        uses: sazriel26/github-actions-sandbox/setup-homebrew-on-github-actions@main
-        with:
-          developer-mode: true
+     - id: setup-homebrew
+       uses: sazriel26/github-actions-sandbox/setup-homebrew-on-github-actions@main
+       with:
+         developer-mode: true
 
-      - id: homebrew-tap
-        run: |
-          brew tap ${{ github.repository }}
+     - id: homebrew-tap
+       run: |
+         brew tap ${{ github.repository }}
 
-      - id: homebrew-tap-info
-        run: |
-          brew tap-info --json ${{ github.repository }} \
-            > ${{ inputs.github_actions_artifact_name }}
+     - id: homebrew-tap-info-json
+       run: |
+         brew tap-info --json ${{ github.repository }} \
+           > ${{ inputs.github_actions_artifact_name }}
 
-      - id: upload-artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ inputs.github_actions_artifact_name }}
-          path: ${{ inputs.github_actions_artifact_name }}
-          overwrite: true
+     - id: upload-artifacts
+       uses: actions/upload-artifact@v4
+       with:
+         name: ${{ inputs.github_actions_artifact_name }}
+         path: ${{ inputs.github_actions_artifact_name }}
+         overwrite: true
 
      - id: echo 
        run: |
