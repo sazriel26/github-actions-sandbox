@@ -21,7 +21,7 @@ jobs:
     outputs:
       ref: ${{ steps.get-ref.outputs.ref }}
 
-    #if: ${{ ! inputs.forced }}
+    if: ${{ ! inputs.forced }}
     steps:
       - id: download-artifacts
         continue-on-error: true
@@ -44,7 +44,7 @@ jobs:
     outputs:
       ref: ${{ steps.get-ref.outputs.ref }}
 
-    #if: ${{ ! inputs.forced }}
+    if: ${{ ! inputs.forced }}
     steps:
       - id: get-ref
         run: |
@@ -57,13 +57,11 @@ jobs:
     outputs:
       go-ahead: ${{ steps.check.outputs.yesno }}
 
-    #if: ${{ ! inputs.forced }}
+    if: ${{ ! inputs.forced }}
     steps:
       - id: check
         run: |
-          if [[ ${{ inputs.forced }} ]]; then
-            echo yesno=1
-          elif [[ ${{ needs.check_artifact_ref.outputs.ref }} != ${{ needs.check_git_ref.outputs.ref }} ]]; then
+          if [[ "${{ needs.check_artifact_ref.outputs.ref }}" != "${{ needs.check_git_ref.outputs.ref }}" ]]; then
             echo yesno=1
           else
             echo yesno=0
