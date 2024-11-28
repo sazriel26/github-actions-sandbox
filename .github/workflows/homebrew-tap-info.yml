@@ -27,6 +27,8 @@ jobs:
         continue-on-error: true
         run: |
           gh run download -n ${{ inputs.github_actions_artifact_name }}
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - id: get-ref
         run: |
