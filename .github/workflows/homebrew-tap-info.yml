@@ -26,7 +26,7 @@ jobs:
       - id: download-artifacts
         continue-on-error: true
         run: |
-          gh run download -n ${{ inputs.github_actions_artifact_name }}
+          gh run download -n ${{ inputs.github_actions_artifact_name }} --repo ${{ github.repository }}
         env:
           GH_TOKEN: ${{ github.token }}
 
