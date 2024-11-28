@@ -65,7 +65,7 @@ jobs:
     outputs:
       homebrew-tap-info-json: ${{ steps.echo.outputs.json }}
 
-    if: ${{ inputs.forced || needs.check_freshness.outputs.go-ahead }}
+    if: ${{ inputs.forced || (needs.check_freshness.outputs.go-ahead != 0) }}
     steps:
      - id: setup-homebrew
        uses: sazriel26/github-actions-sandbox/setup-homebrew-on-github-actions@main
