@@ -32,7 +32,7 @@ jobs:
       - id: get-ref
         if: always()
         run: |
-          echo ref=$(jq -r '.[0]."HEAD"' ${{ inputs.github_actions_artifact_name }}) >> $GITHUB_OUTPUT
+          echo ref=$(jq -r '.[0]."HEAD"' < ${{ inputs.github_actions_artifact_name }}) >> $GITHUB_OUTPUT
 
   check_git_ref:
     runs-on: ubuntu-latest
