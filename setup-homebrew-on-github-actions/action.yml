@@ -25,7 +25,7 @@ runs:
     - id: install-homebrew
       if: runner.os == 'linux'
       run: |
-        sudo apt install build-essential -y
+        #sudo apt install build-essential -y
         curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh \
           | bash
         echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
