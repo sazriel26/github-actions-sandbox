@@ -1,0 +1,30 @@
+# [https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#running-a-workflow-when-a-pull-request-is-approved]
+on:
+#  pull_request_review:
+#    types: [submitted]
+  workflow_call:
+    inputs:
+      dry-run:
+        description: "Simulate (dry-run) operation - Default: true"
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+
+    if: github.event.review.state == 'approved'
+    steps:
+      - id: gh-pr-merge
+        if: ${{ ! inputs.dry-run }}
+        run: |
+          gh pr merge \
+           --auto \
+           --rebase \
+           --repo ${{ github.repository }} \
+           ${{ github.event.pull_request_review.review.url }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+# EoF
