@@ -10,7 +10,7 @@ on:
         type: boolean
         default: true
 
-permission:
+permissions:
   pull-requests: write
 
 jobs:
