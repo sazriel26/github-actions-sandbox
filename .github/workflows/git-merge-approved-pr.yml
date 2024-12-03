@@ -23,7 +23,7 @@ jobs:
            --auto \
            --rebase \
            --repo ${{ github.repository }} \
-           ${{ github.event.pull_request_review.review.url }}
+           ${{ github.event.review.url }}
         env:
           GH_TOKEN: ${{ github.token }}
 
