@@ -10,6 +10,9 @@ on:
         type: boolean
         default: true
 
+permission:
+  pull-requests: write
+
 jobs:
   merge:
     runs-on: ubuntu-latest
