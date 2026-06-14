@@ -88,6 +88,7 @@ jobs:
       - id: homebrew_tap
         run: |
           brew tap ${{ github.repository }}
+          brew trust ${{ github.repository }}
           gawb=${{ env.github_head_ref }}
           if [[ -n "${gawb}" ]]; then
             br="$(brew --repository)/Library/Taps/${{ github.repository }}"
